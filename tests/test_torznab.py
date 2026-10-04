@@ -23,3 +23,5 @@ def test_feed_escapes_and_item():
     assert 'a &amp; "b"' in xml
     assert 'url="ed2k://|file|a&amp;b|10|ABC|/"' in xml
     assert "<category>2000</category>" in xml
+    assert "<pubDate>" in xml
+    assert 'torznab:attr name="seeders"' in xml
