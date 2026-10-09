@@ -56,7 +56,7 @@ def _extract_year(title_text: str) -> int | None:
 
 def search(session: HispamulaSession, query: str) -> list[SearchResult]:
     response = session.get("/", params={"view": "search", "q": query})
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(response.text, "lxml")
     results: list[SearchResult] = []
     for tr in soup.select("tr.T1"):
         anchor = tr.select_one("h1 a")
@@ -124,7 +124,7 @@ def _parse_group(table) -> tuple[int, str, list[tuple[str, int]]]:
 def _download_links(session: HispamulaSession, group_id: int, count: int) -> list[Ed2kFile]:
     code = "1" * count
     response = session.get("/ajax/download.php", params={"id": group_id, "code": code})
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(response.text, "lxml")
     textarea = soup.find(id="ELINKSLIST")
     if textarea is None:
         return []
@@ -150,7 +150,7 @@ def _download_links(session: HispamulaSession, group_id: int, count: int) -> lis
 
 def detail(session: HispamulaSession, title_id: int) -> TitleDetail:
     response = session.get("/", params={"title": title_id})
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(response.text, "lxml")
 
     title = ""
     h1 = soup.select_one("h1")

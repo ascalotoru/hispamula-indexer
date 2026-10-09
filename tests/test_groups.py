@@ -4,7 +4,7 @@ from app.hispamula import _parse_group
 
 
 def test_serie_groups(read_fixture):
-    soup = BeautifulSoup(read_fixture("detail_serie.html"), "html.parser")
+    soup = BeautifulSoup(read_fixture("detail_serie.html"), "lxml")
     groups = []
     for table in soup.select("table.T2"):
         gid, label, rows = _parse_group(table)
