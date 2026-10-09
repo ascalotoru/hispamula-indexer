@@ -67,7 +67,9 @@ def _do_search(query: str, mode: str) -> list[tuple[Ed2kFile, int]]:
     return files
 
 
+@app.get("/")
 @app.get("/api")
+@app.get("/api/api")
 def api(request: Request) -> Response:
     t = request.query_params.get("t", "search")
     if t == "caps":
