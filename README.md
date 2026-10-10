@@ -1,96 +1,96 @@
 # hispamula-indexer
 
-A [Torznab](https://torznab.readthedocs.io/)/Newznab indexer for [hispamula.org](https://www.hispamula.org/) — a Spanish catalog of movies, series and documentaries shared as eMule/eD2k links. It scrapes the site and exposes a searchable XML feed so [Prowlarr](https://prowlarr.com/), [Jackett](https://github.com/Jackett/Jackett) and the *arr stack (Sonarr/Radarr/…) can search hispamula and hand `ed2k://` links to an eMule client (e.g. [aMule](https://www.amule.org/)).
+Un indexador [Torznab](https://torznab.readthedocs.io/)/Newznab para [hispamula.org](https://www.hispamula.org/) — un catálogo en español de películas, series y documentales compartidos como enlaces eMule/eD2k. Scrapea el sitio y expone un feed XML consultable para que [Prowlarr](https://prowlarr.com/), [Jackett](https://github.com/Jackett/Jackett) y el stack *arr (Sonarr/Radarr/…) puedan buscar en hispamula y pasar los enlaces `ed2k://` a un cliente eMule (por ejemplo [aMule](https://www.amule.org/)).
 
-## Features
+## Características
 
-- **Torznab API** — `caps`, `search`, `movie`, `tvsearch` endpoints.
-- **Real eD2k extraction** — fetches the actual `ed2k://` links (hash + size), not just titles.
-- **Authenticated** — logs in to hispamula to reach login-gated links.
-- **Categories** — maps Película/Documental → Movies (2000), Serie/Docuserie → TV (5000).
-- **Rate-limited scraping** — configurable delay + per-title caching.
-- **Docker + CI** — builds and publishes a container image to GHCR.
+- **API Torznab** — endpoints `caps`, `search`, `movie`, `tvsearch`.
+- **Extracción real de eD2k** — obtiene los enlaces `ed2k://` reales (hash + tamaño), no sólo los títulos.
+- **Autenticado** — inicia sesión en hispamula para acceder a los enlaces restringidos.
+- **Categorías** — mapea Película/Documental → Películas (2000), Serie/Docuserie → TV (5000).
+- **Scraping con límite de peticiones** — retardo configurable + caché por título.
+- **Docker + CI** — construye y publica una imagen de contenedor en GHCR.
 
-## How it works
+## Cómo funciona
 
 ```
-*arr ──query──▶ Prowlarr/Jackett ──Torznab──▶ hispamula-indexer ──HTTP──▶ hispamula.org
-  ▲                                                              │
-  └──────────── ed2k:// link ──▶ download client (aMule) ◀───────┘
+*arr ──consulta──▶ Prowlarr/Jackett ──Torznab──▶ hispamula-indexer ──HTTP──▶ hispamula.org
+  ▲                                                                │
+  └──────────── enlace ed2k:// ──▶ cliente de descarga (aMule) ◀────┘
 ```
 
-1. The indexer receives a Torznab search request (`q`, optional `season`/`ep`).
-2. It searches hispamula (`/?view=search&q=…`) and parses the result list.
-3. For each result it fetches the title page and extracts the eD2k groups.
-4. It downloads the actual link list and returns one Torznab `<item>` per `ed2k://` file.
-5. The *arr app hands the `ed2k://` URL to its download client (aMule).
+1. El indexador recibe una petición de búsqueda Torznab (`q`, con `season`/`ep` opcionales).
+2. Busca en hispamula (`/?view=search&q=…`) y analiza la lista de resultados.
+3. Para cada resultado obtiene la página del título y extrae los grupos de eD2k.
+4. Descarga la lista real de enlaces y devuelve un `<item>` de Torznab por cada archivo `ed2k://`.
+5. La aplicación *arr entrega la URL `ed2k://` a su cliente de descarga (aMule).
 
-## Requirements
+## Requisitos
 
 - Python 3.12
-- A hispamula.org account (free registration). eD2k links are only visible when logged in.
+- Una cuenta de hispamula.org (registro gratuito). Los enlaces eD2k sólo son visibles al iniciar sesión.
 
-## Setup (local)
+## Instalación (local)
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 
 cp .env.example .env
-# edit .env: set HISPAMULA_USER and HISPAMULA_PASSWORD
+# edita .env: define HISPAMULA_USER y HISPAMULA_PASSWORD
 
 .venv/bin/uvicorn app.main:app --reload --port 8080
 ```
 
-> **Important:** `HISPAMULA_USER` is your hispamula **handle** (login name), **not** your registration email. The email logs in as anonymous.
+> **Importante:** `HISPAMULA_USER` es tu **usuario** (nombre de inicio de sesión) de hispamula, **no** tu correo de registro. El correo inicia sesión como anónimo.
 
 ## Docker
 
 ```bash
 docker build -t hispamula-indexer .
 docker run --rm -p 8080:8080 \
-  -e HISPAMULA_USER=your_handle \
-  -e HISPAMULA_PASSWORD=your_password \
+  -e HISPAMULA_USER=tu_usuario \
+  -e HISPAMULA_PASSWORD=tu_contraseña \
   hispamula-indexer
 ```
 
-## Integrate with Prowlarr / Jackett
+## Integración con Prowlarr / Jackett
 
-Add a **Generic Torznab** indexer pointing to the service. The API is served at `/`, `/api` and `/api/api`.
+Añade un indexador **Generic Torznab** apuntando al servicio. La API se sirve en `/`, `/api` y `/api/api`.
 
-- **Prowlarr** appends `/api` to the base URL, so set the base URL to `http://<host>:8080` (no `/api`). Both forms work.
-- **Jackett** (custom Torznab) — use the full URL `http://<host>:8080/api`.
+- **Prowlarr** añade `/api` a la URL base, así que define la URL base como `http://<host>:8080` (sin `/api`). Ambas formas funcionan.
+- **Jackett** (Torznab personalizado) — usa la URL completa `http://<host>:8080/api`.
 
-Point your *arr app's download client at your eMule bridge (e.g. aMule / amulerr), which accepts the `ed2k://` URLs returned by the indexer.
+Configura el cliente de descarga de tu aplicación *arr para que apunte a tu puente eMule (por ejemplo aMule / amulerr), que acepta las URLs `ed2k://` devueltas por el indexador.
 
-## Configuration
+## Configuración
 
-All settings are environment variables (`HISPAMULA_*`), read by `app/config.py`.
+Todas las opciones son variables de entorno (`HISPAMULA_*`), leídas por `app/config.py`.
 
-| Variable                  | Default                      | Description                                        |
-| ------------------------- | ---------------------------- | -------------------------------------------------- |
-| `HISPAMULA_USER`          | —                            | hispamula handle (required for gated links)        |
-| `HISPAMULA_PASSWORD`      | —                            | hispamula password                                 |
-| `HISPAMULA_BASE_URL`      | `https://www.hispamula.org`  | site base URL                                      |
-| `HISPAMULA_REQUEST_DELAY` | `1.0`                        | seconds between requests                           |
-| `HISPAMULA_CACHE_TTL`     | `600`                        | cache lifetime (seconds) for title/link pages      |
-| `HISPAMULA_TIMEOUT`       | `30.0`                       | HTTP timeout (seconds)                             |
-| `HISPAMULA_MAX_RESULTS`   | `25`                         | max titles processed per search                    |
-| `HISPAMULA_USER_AGENT`    | `hispamula-indexer/0.1`      | User-Agent header                                  |
+| Variable                  | Por defecto                  | Descripción                                         |
+| ------------------------- | ---------------------------- | --------------------------------------------------- |
+| `HISPAMULA_USER`          | —                            | usuario de hispamula (necesario para enlaces restringidos) |
+| `HISPAMULA_PASSWORD`      | —                            | contraseña de hispamula                             |
+| `HISPAMULA_BASE_URL`      | `https://www.hispamula.org`  | URL base del sitio                                  |
+| `HISPAMULA_REQUEST_DELAY` | `1.0`                        | segundos entre peticiones                           |
+| `HISPAMULA_CACHE_TTL`     | `600`                        | vida de la caché (segundos) para páginas de título/enlaces |
+| `HISPAMULA_TIMEOUT`       | `30.0`                       | tiempo de espera HTTP (segundos)                    |
+| `HISPAMULA_MAX_RESULTS`   | `25`                         | máximo de títulos procesados por búsqueda           |
+| `HISPAMULA_USER_AGENT`    | `hispamula-indexer/0.1`      | cabecera User-Agent                                 |
 
-## Development
+## Desarrollo
 
 ```bash
-.venv/bin/python -m pytest                 # all tests
-.venv/bin/python -m pytest tests/test_torznab.py   # single file
+.venv/bin/python -m pytest                 # todos los tests
+.venv/bin/python -m pytest tests/test_torznab.py   # un solo archivo
 ```
 
-Tests run offline against fixtures in `tests/fixtures/` (real scraped HTML) and never hit the network. There is no linter/formatter/typechecker configured.
+Los tests se ejecutan sin red contra los fixtures de `tests/fixtures/` (HTML real scrapeado) y nunca acceden a la red. No hay linter/formateador/typechecker configurado.
 
-## License
+## Licencia
 
 [Apache License 2.0](LICENSE).
 
-## Disclaimer
+## Aviso legal
 
-This project is **not affiliated with hispamula.org**. It is an unofficial scraper built for personal use. Only download content you have the legal right to, and respect hispamula.org's terms of service and any applicable copyright law.
+Este proyecto **no está afiliado con hispamula.org**. Es un scraper no oficial creado para uso personal. Descarga únicamente contenido sobre el que tengas derecho legal, y respeta los términos de servicio de hispamula.org y la legislación de derechos de autor aplicable.
