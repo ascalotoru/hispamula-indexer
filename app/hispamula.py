@@ -192,3 +192,35 @@ def torznab_category(typ: str) -> int:
     if typ in TV_TYPES:
         return 5000
     return 0
+
+
+_UHD_RE = re.compile(r"\b(2160p|4k|uhd)\b", re.I)
+_HD_RE = re.compile(r"\b(1080p|720p)\b", re.I)
+_SD_RE = re.compile(r"\b(480p|576p|360p|xvid|dvdrip|dvd-rip)\b", re.I)
+_WEB_DL_RE = re.compile(r"\bweb-?dl\b", re.I)
+_BLURAY_RE = re.compile(r"\b(blu-?ray|bd-?rip|brrip|bdrip)\b", re.I)
+_X265_RE = re.compile(r"\b(hevc|x265|h\.?265)\b", re.I)
+
+
+def torznab_subcategories(typ: str, label: str) -> list[int]:
+    """Subcategorías Newznab para un archivo según su calidad (resolución,
+    formato y codec). Devuelve la categoría padre + subcategorías."""
+    parent = torznab_category(typ)
+    if not parent:
+        return []
+    is_tv = parent == 5000
+    text = label.lower()
+    cats: list[int] = [parent]
+    if _UHD_RE.search(text):
+        cats.append(5045 if is_tv else 2045)
+    elif _HD_RE.search(text):
+        cats.append(5040 if is_tv else 2040)
+    elif _SD_RE.search(text):
+        cats.append(5030 if is_tv else 2030)
+    if _WEB_DL_RE.search(text):
+        cats.append(5010 if is_tv else 2080)
+    elif _BLURAY_RE.search(text):
+        cats.append(2050)  # Movies/BluRay
+    if _X265_RE.search(text):
+        cats.append(5090 if is_tv else 2090)
+    return cats
