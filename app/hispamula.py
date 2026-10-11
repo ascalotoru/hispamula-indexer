@@ -54,6 +54,15 @@ def _extract_year(title_text: str) -> int | None:
     return int(matches[-1])
 
 
+def _extract_type(root) -> str:
+    """Devuelve el tipo ('Serie', 'Película', ...) desde el p.INFO de Género."""
+    for info in root.select("p.INFO"):
+        m = re.match(r"Género:\s*([^>]+)", info.get_text(" ", strip=True))
+        if m:
+            return m.group(1).strip()
+    return ""
+
+
 def search(session: HispamulaSession, query: str) -> list[SearchResult]:
     response = session.get("/", params={"view": "search", "q": query})
     soup = BeautifulSoup(response.text, "lxml")
@@ -71,12 +80,7 @@ def search(session: HispamulaSession, query: str) -> list[SearchResult]:
         text_p = tr.select_one("p.TEXT")
         if text_p is not None:
             synopsis = text_p.get_text(" ", strip=True)
-        typ = ""
-        info = tr.select_one("p.INFO")
-        if info is not None:
-            m = re.match(r"Género:\s*([^>]+)", info.get_text(" ", strip=True))
-            if m:
-                typ = m.group(1).strip()
+        typ = _extract_type(tr)
         cover = ""
         img = tr.select_one("img.COVER_SMALL")
         if img is not None:
@@ -157,12 +161,7 @@ def detail(session: HispamulaSession, title_id: int) -> TitleDetail:
     if h1 is not None:
         title = h1.get_text(" ", strip=True)
 
-    typ = ""
-    info = soup.select_one("p.INFO")
-    if info is not None:
-        m = re.match(r"Género:\s*([^>]+)", info.get_text(" ", strip=True))
-        if m:
-            typ = m.group(1).strip()
+    typ = _extract_type(soup)
 
     files: list[Ed2kFile] = []
     for table in soup.select("table.T2"):
