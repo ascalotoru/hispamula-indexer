@@ -35,6 +35,8 @@ Torznab indexer for hispamula.org (eMule/eD2k links). Python 3.12 + FastAPI. Ser
 
 - Served at `/`, `/api`, and `/api/api` (Prowlarr appends `/api` to the base URL). Endpoints: `t=caps`, `t=search`, `t=movie`, `t=tvsearch`.
 - Every item MUST include `<pubDate>` — Prowlarr rejects feeds without it.
+- Every item MUST include the Newznab category (parent + subcategories by quality, see `torznab_subcategories` in `app/hispamula.py`) via `<category>` elements and `torznab:attr name="category"`.
+- Every item MUST also set `<torznab:attr name="size">` — Prowlarr ignores the `<size>` element for `application/x-ed2k` enclosures.
 
 ## Security (repo is PUBLIC)
 
@@ -50,3 +52,9 @@ Torznab indexer for hispamula.org (eMule/eD2k links). Python 3.12 + FastAPI. Ser
 
 - Python pinned to 3.12.9 in `.python-version`, `Dockerfile`, and CI — keep all three in sync.
 - `lxml` pinned 6.1.3 (6.x required for Python 3.14 wheels; 5.3.0 has none).
+
+## Commits
+
+- Commits are grouped **by functionality**: one logical change per commit (feat/fix/docs/chore), following conventional-commit prefixes (e.g. `feat:`, `fix:`, `docs:`, `chore:`, `test:`).
+- Do NOT mix unrelated functionalities in the same commit. If several changes are in the working tree, split them into separate commits (stage by hunks with `git add -p`).
+- Messages in Spanish, imperative, summarizing the change (`feat: exponer calidad en el feed`, `fix: categorías por género`).

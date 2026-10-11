@@ -7,7 +7,8 @@ Un indexador [Torznab](https://torznab.readthedocs.io/)/Newznab para [hispamula.
 - **API Torznab** — endpoints `caps`, `search`, `movie`, `tvsearch`.
 - **Extracción real de eD2k** — obtiene los enlaces `ed2k://` reales (hash + tamaño), no sólo los títulos.
 - **Autenticado** — inicia sesión en hispamula para acceder a los enlaces restringidos.
-- **Categorías** — mapea Película/Documental → Películas (2000), Serie/Docuserie → TV (5000).
+- **Categorías Newznab** — mapea Película/Documental → Películas (2000) y Serie/Docuserie → TV (5000), con **subcategorías por calidad/formato** (HD, UHD, SD, WEB-DL, BluRay, x265…).
+- **Calidad en el feed** — cada `<item>` incluye la calidad del grupo en el título y los `torznab:attr` correspondientes, para que Prowlarr/*arr clasifiquen 1080p frente a UHD 4K.
 - **Scraping con límite de peticiones** — retardo configurable + caché por título.
 - **Docker + CI** — construye y publica una imagen de contenedor en GHCR.
 
@@ -22,7 +23,7 @@ Un indexador [Torznab](https://torznab.readthedocs.io/)/Newznab para [hispamula.
 1. El indexador recibe una petición de búsqueda Torznab (`q`, con `season`/`ep` opcionales).
 2. Busca en hispamula (`/?view=search&q=…`) y analiza la lista de resultados.
 3. Para cada resultado obtiene la página del título y extrae los grupos de eD2k.
-4. Descarga la lista real de enlaces y devuelve un `<item>` de Torznab por cada archivo `ed2k://`.
+4. Descarga la lista real de enlaces y devuelve un `<item>` de Torznab por cada archivo `ed2k://`, con su categoría/subcategorías Newznab y calidad (resolución, formato, codec).
 5. La aplicación *arr entrega la URL `ed2k://` a su cliente de descarga (aMule).
 
 ## Requisitos
