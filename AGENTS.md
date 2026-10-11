@@ -46,7 +46,16 @@ Torznab indexer for hispamula.org (eMule/eD2k links). Python 3.12 + FastAPI. Ser
 ## Deploy
 
 - Manifests are NOT in this repo; they live in gitops repo `ascalotoru/k3s-asiercl-flux` under `applications/hispamula-indexer/` (namespace `servarr`, image `ghcr.io/ascalotoru/hispamula-indexer`).
-- CI (`.github/workflows/build.yaml`) runs tests then builds+pushes the image to GHCR on push to `master`.
+- CI (`.github/workflows/build.yaml`) runs tests then builds+pushes the image to GHCR: `latest` on push to `master`, semver tags `X.Y.Z`/`X.Y` on tag `v*`.
+
+## Releases
+
+- La única fuente de verdad de la versión es `__version__` en `app/__init__.py`; el caps de torznab la expone en `appversion`/`version`.
+- `release-please` (`.github/workflows/release.yaml`) mantiene un PR de release (`release-please/branches/master → master`) que acumula los commits convencionales desde el último release.
+- Para publicar: fusionar ese PR. Al fusionarlo se sube `__version__`, se regenera `CHANGELOG.md`, se crea el tag `vX.Y.Z` (bump: `feat:` → minor, `fix:` → patch, `BREAKING CHANGE` → major) y el Release de GitHub.
+- El tag `v*` dispara `build.yaml` → imagen con etiqueta semver (`X.Y.Z`, `X.Y`). En push a `master` solo se sube `latest` (dev).
+- Bootstrap: `.release-please-manifest.json` arranca en `0.0.0` antes de la primera release (que sale en `0.1.0`).
+- Flux (repo gitops `k3s-asiercl-flux`) debe seguir un rango semver de la imagen, no `latest` — pendiente de migrar.
 
 ## Version parity
 
