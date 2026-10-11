@@ -1,4 +1,4 @@
-from app.hispamula import detail
+from app.hispamula import detail, torznab_category
 
 from tests.conftest import FakeSession
 
@@ -10,6 +10,8 @@ def test_detail_collection(read_fixture):
     )
     det = detail(session, 41554)
     assert det.title_id == 41554
+    assert det.type == "Película"
+    assert torznab_category(det.type) == 2000
     assert len(det.files) == 44
     first = det.files[0]
     assert first.hash == "B4DCEC7F52F1962638B441CA168575E3"
@@ -17,3 +19,13 @@ def test_detail_collection(read_fixture):
     assert first.group_label == "BDrip 1080p: mkv (HEVC 10b-AC3)"
     assert first.url.startswith("ed2k://")
     assert first.name
+
+
+def test_detail_serie_type(read_fixture):
+    session = FakeSession(
+        page=read_fixture("detail_serie.html"),
+        downloads={},
+    )
+    det = detail(session, 1)
+    assert det.type == "Serie"
+    assert torznab_category(det.type) == 5000
