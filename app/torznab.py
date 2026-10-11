@@ -6,6 +6,7 @@ import time
 from email.utils import formatdate
 from xml.sax.saxutils import escape, quoteattr
 
+from . import __version__
 from .config import BASE_URL
 from .hispamula import Ed2kFile
 
@@ -14,7 +15,7 @@ def capabilities() -> str:
     return (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<caps>\n'
-        "  <server appversion=\"0.1\" version=\"0.1\" title=\"Hispamula\" "
+        f"  <server appversion=\"{__version__}\" version=\"{__version__}\" title=\"Hispamula\" "
         "strapline=\"eMule links indexer\" email=\"\" url=\"https://www.hispamula.org\"/>\n"
         "  <limits max=\"100\" default=\"100\"/>\n"
         "  <categories>\n"

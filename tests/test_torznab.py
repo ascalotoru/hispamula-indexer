@@ -1,5 +1,12 @@
+from app import __version__
 from app.hispamula import Ed2kFile, torznab_subcategories
 from app.torznab import capabilities, feed
+
+
+def test_caps_exposes_package_version():
+    xml = capabilities()
+    assert f'appversion="{__version__}"' in xml
+    assert f'version="{__version__}"' in xml
 
 
 def test_caps():
