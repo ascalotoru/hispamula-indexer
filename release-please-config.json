@@ -3,11 +3,7 @@
     ".": {
       "release-type": "simple",
       "extra-files": [
-        {
-          "type": "generic",
-          "path": "app/__init__.py",
-          "pattern": "__version__ = \"([^\"]*)\""
-        }
+        "app/__init__.py"
       ]
     }
   }
