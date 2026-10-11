@@ -21,6 +21,16 @@ def test_detail_collection(read_fixture):
     assert first.name
 
 
+def test_detail_sets_title_id(read_fixture):
+    session = FakeSession(
+        page=read_fixture("detail_collection.html"),
+        downloads={"82289": read_fixture("download_82289.html")},
+    )
+    det = detail(session, 41554)
+    assert det.files
+    assert all(f.title_id == 41554 for f in det.files)
+
+
 def test_detail_serie_type(read_fixture):
     session = FakeSession(
         page=read_fixture("detail_serie.html"),

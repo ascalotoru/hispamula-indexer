@@ -36,6 +36,7 @@ class Ed2kFile:
     group_id: int
     group_label: str
     downloads: int = 0
+    title_id: int = 0
 
 
 @dataclass
@@ -174,6 +175,7 @@ def detail(session: HispamulaSession, title_id: int) -> TitleDetail:
                 f.name = filename
             f.group_label = label
             f.downloads = downloads
+            f.title_id = title_id
             files.append(f)
 
     return TitleDetail(

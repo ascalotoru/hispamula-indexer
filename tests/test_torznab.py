@@ -36,6 +36,20 @@ def test_feed_escapes_and_item():
     assert 'torznab:attr name="seeders"' in xml
 
 
+def test_feed_includes_page_link():
+    f = Ed2kFile(
+        url="ed2k://|file|a|10|ABC|/",
+        name="a",
+        size=10,
+        hash="ABC",
+        group_id=1,
+        group_label="",
+        title_id=41554,
+    )
+    xml = feed([(f, [2000])])
+    assert "<comments>https://www.hispamula.org/?title=41554</comments>" in xml
+
+
 def test_feed_includes_quality_label():
     def make(hash_, label):
         return Ed2kFile(

@@ -6,6 +6,7 @@ import time
 from email.utils import formatdate
 from xml.sax.saxutils import escape, quoteattr
 
+from .config import BASE_URL
 from .hispamula import Ed2kFile
 
 
@@ -61,10 +62,12 @@ def _item_xml(f: Ed2kFile, categories: list[int], pubdate: str) -> str:
     cat_attrs = "".join(
         f'  <torznab:attr name="category" value="{c}"/>\n' for c in categories
     )
+    page_url = escape(f"{BASE_URL}/?title={f.title_id}")
     return (
         "<item>\n"
         f"  <title>{title}</title>\n"
         f'  <guid isPermaLink="false">{guid}</guid>\n'
+        f"  <comments>{page_url}</comments>\n"
         f"  <pubDate>{pubdate}</pubDate>\n"
         f"{cat_tags}"
         f"  <size>{f.size}</size>\n"
