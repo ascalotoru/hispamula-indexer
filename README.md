@@ -29,7 +29,7 @@ Un indexador [Torznab](https://torznab.readthedocs.io/)/Newznab para [hispamula.
 ## Requisitos
 
 - Python 3.12
-- Una cuenta de hispamula.org (registro gratuito). Los enlaces eD2k sólo son visibles al iniciar sesión.
+- Una cuenta de hispamula.org.
 
 ## Instalación (local)
 
@@ -42,8 +42,6 @@ cp .env.example .env
 
 .venv/bin/uvicorn app.main:app --reload --port 8080
 ```
-
-> **Importante:** `HISPAMULA_USER` es tu **usuario** (nombre de inicio de sesión) de hispamula, **no** tu correo de registro. El correo inicia sesión como anónimo.
 
 ## Docker
 
