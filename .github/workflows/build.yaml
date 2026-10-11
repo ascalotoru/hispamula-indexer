@@ -3,6 +3,7 @@ name: build
 on:
   push:
     branches: [master]
+    tags: ['v*']
   workflow_dispatch:
 
 jobs:
@@ -36,8 +37,9 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=sha,prefix=
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ github.ref_type == 'branch' }}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
 
       - uses: docker/build-push-action@v5
         with:
