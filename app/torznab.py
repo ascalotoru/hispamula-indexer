@@ -18,10 +18,28 @@ def capabilities() -> str:
         "  <limits max=\"100\" default=\"100\"/>\n"
         "  <categories>\n"
         '    <category id="2000" name="Movies">\n'
-        '      <subcat id="2000" name="Movies"/>\n'
+        '      <subcat id="2010" name="Foreign"/>\n'
+        '      <subcat id="2020" name="Other"/>\n'
+        '      <subcat id="2030" name="SD"/>\n'
+        '      <subcat id="2040" name="HD"/>\n'
+        '      <subcat id="2045" name="UHD"/>\n'
+        '      <subcat id="2050" name="BluRay"/>\n'
+        '      <subcat id="2060" name="3D"/>\n'
+        '      <subcat id="2070" name="DVD"/>\n'
+        '      <subcat id="2080" name="WEB-DL"/>\n'
+        '      <subcat id="2090" name="x265"/>\n'
         "    </category>\n"
         '    <category id="5000" name="TV">\n'
-        '      <subcat id="5000" name="TV"/>\n'
+        '      <subcat id="5010" name="WEB-DL"/>\n'
+        '      <subcat id="5020" name="Foreign"/>\n'
+        '      <subcat id="5030" name="SD"/>\n'
+        '      <subcat id="5040" name="HD"/>\n'
+        '      <subcat id="5045" name="UHD"/>\n'
+        '      <subcat id="5050" name="Other"/>\n'
+        '      <subcat id="5060" name="Sport"/>\n'
+        '      <subcat id="5070" name="Anime"/>\n'
+        '      <subcat id="5080" name="Documentary"/>\n'
+        '      <subcat id="5090" name="x265"/>\n'
         "    </category>\n"
         "  </categories>\n"
         "  <searching>\n"
@@ -33,18 +51,25 @@ def capabilities() -> str:
     )
 
 
-def _item_xml(f: Ed2kFile, category: int, pubdate: str) -> str:
+def _item_xml(f: Ed2kFile, categories: list[int], pubdate: str) -> str:
     guid = f.hash
-    title = escape(f.name)
+    label = f" [{f.group_label}]" if f.group_label else ""
+    title = escape(f"{f.name}{label}")
     url = quoteattr(f.url)
     seeders = max(f.downloads, 0)
+    cat_tags = "".join(f"  <category>{c}</category>\n" for c in categories)
+    cat_attrs = "".join(
+        f'  <torznab:attr name="category" value="{c}"/>\n' for c in categories
+    )
     return (
         "<item>\n"
         f"  <title>{title}</title>\n"
         f'  <guid isPermaLink="false">{guid}</guid>\n'
         f"  <pubDate>{pubdate}</pubDate>\n"
-        f"  <category>{category}</category>\n"
+        f"{cat_tags}"
         f"  <size>{f.size}</size>\n"
+        f'  <torznab:attr name="size" value="{f.size}"/>\n'
+        f"{cat_attrs}"
         f'  <torznab:attr name="seeders" value="{seeders}"/>\n'
         f'  <torznab:attr name="peers" value="{seeders}"/>\n'
         f"  <enclosure url={url} length=\"{f.size}\" type=\"application/x-ed2k\"/>\n"
@@ -52,7 +77,7 @@ def _item_xml(f: Ed2kFile, category: int, pubdate: str) -> str:
     )
 
 
-def feed(files: list[tuple[Ed2kFile, int]], query: str = "") -> str:
+def feed(files: list[tuple[Ed2kFile, list[int]]], query: str = "") -> str:
     pubdate = formatdate(time.time(), usegmt=True)
     items = "".join(_item_xml(f, cat, pubdate) for f, cat in files)
     return (

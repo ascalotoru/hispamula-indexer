@@ -15,7 +15,7 @@ from .hispamula import (
     HispamulaSession,
     detail,
     search,
-    torznab_category,
+    torznab_subcategories,
 )
 from .torznab import capabilities, feed
 
@@ -49,10 +49,10 @@ def _filter_type(typ: str, mode: str) -> bool:
     return True
 
 
-def _do_search(query: str, mode: str) -> list[tuple[Ed2kFile, int]]:
+def _do_search(query: str, mode: str) -> list[tuple[Ed2kFile, list[int]]]:
     session = get_session()
     results = search(session, query)
-    files: list[tuple[Ed2kFile, int]] = []
+    files: list[tuple[Ed2kFile, list[int]]] = []
     for result in results[: config.MAX_RESULTS]:
         if not _filter_type(result.type, mode):
             continue
@@ -61,9 +61,9 @@ def _do_search(query: str, mode: str) -> list[tuple[Ed2kFile, int]]:
         except Exception as exc:  # noqa: BLE001
             logger.warning("error detalle %s: %s", result.title_id, exc)
             continue
-        category = torznab_category(det.type)
         for f in det.files:
-            files.append((f, category))
+            cats = torznab_subcategories(det.type, f"{f.name} {f.group_label}")
+            files.append((f, cats))
     return files
 
 
