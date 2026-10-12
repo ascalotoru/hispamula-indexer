@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/ascalotoru/hispamula-indexer/compare/v1.0.2...v1.0.3) (2026-10-12)
+
+
+### Bug Fixes
+
+* emitir magnet compatible con aMulerr en el feed ([700dc5d](https://github.com/ascalotoru/hispamula-indexer/commit/700dc5d90281a898868579b6b91220c43f44297f))
+
 ## [1.0.2](https://github.com/ascalotoru/hispamula-indexer/compare/v1.0.1...v1.0.2) (2026-10-12)
 
 
