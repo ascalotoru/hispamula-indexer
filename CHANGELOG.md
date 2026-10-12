@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.2](https://github.com/ascalotoru/hispamula-indexer/compare/v1.0.1...v1.0.2) (2026-10-12)
+
+
+### Bug Fixes
+
+* cachear búsquedas y fichas para evitar el timeout del RSS sync ([718155f](https://github.com/ascalotoru/hispamula-indexer/commit/718155fd601e3a712a946a4dc10d4532a8402ac4))
+* ignorar el año final en la búsqueda ([755a2cd](https://github.com/ascalotoru/hispamula-indexer/commit/755a2cdd0982a90c16c2c9b9b470d5e9976c3592))
+
 ## [1.0.1](https://github.com/ascalotoru/hispamula-indexer/compare/v1.0.0...v1.0.1) (2026-10-12)
 
 
