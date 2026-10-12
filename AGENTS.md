@@ -21,8 +21,10 @@ Torznab indexer for hispamula.org (eMule/eD2k links). Python 3.12 + FastAPI. Ser
 ## Scraping flow (non-obvious)
 
 - Search: `GET /?view=search&q=<query>` → results in `tr.T1`, pagination `&page=N`.
-- Detail: `GET /?title=<id>`. eD2k links are login-gated and listed as groups (`table.T2`, checkboxes `elink_<group>_<i>`, button `DownloadSelected(<group>, <count>)`).
-- Fetch links: `GET /ajax/download.php?id=<group>&code=<count ones>` → `<textarea id="ELINKSLIST">` with one `ed2k://|file|NAME|SIZE|HASH|/` per line.
+- Detail: `GET /?title=<id>`. eD2k links are login-gated and listed as groups (`table.T2`). Groups come in two shapes:
+  - **Modernos**: checkboxes `elink_<group>_<i>` + button `DownloadSelected(<group>, <count>)`. Fetch links in a single batch with `code='1'*count`.
+  - **Legacy** (publicaciones antiguas): each row is a `javascript:Download(<group>,'<code>')` link, no checkboxes. Must be fetched **per row** with its own `code`; `_parse_group` marks them with `code` set (None = batch). Do not skip them or their files are lost.
+- Fetch links: `GET /ajax/download.php?id=<group>&code=<mask>` → `<textarea id="ELINKSLIST">` with one `ed2k://|file|NAME|SIZE|HASH|/` per line. `code` is a bitmask string ('1' at position *i* = select checkbox *i*).
 - Correlate rows ↔ ed2k by **index** (row filename = display name; ed2k `NAME` is dotted). Do not match by name.
 
 ## Auth

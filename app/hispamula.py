@@ -12,6 +12,7 @@ from .session import HispamulaSession
 TITLE_ID_RE = re.compile(r"title=(\d+)")
 YEAR_RE = re.compile(r"\b(\d{4})\b")
 ED2K_RE = re.compile(r"ed2k://\|file\|([^|]*)\|(\d+)\|([0-9A-Fa-f]{32})\|/")
+DOWNLOAD_JS_RE = re.compile(r"Download\((\d+),'([01]+)'\)")
 
 MOVIE_TYPES = {"Película", "Documental"}
 TV_TYPES = {"Serie", "Docuserie"}
@@ -46,6 +47,22 @@ class TitleDetail:
     year: int | None
     type: str
     files: list[Ed2kFile] = field(default_factory=list)
+
+
+@dataclass
+class GroupRow:
+    """Una fila descargable de una tabla T2.
+
+    Las publicaciones modernas enumeran las filas con checkboxes
+    ``elink_<gid>_<i>`` y se descargan en lote (``code`` None); las antiguas
+    llevan un enlace ``Download(<gid>, '<code>')`` por fila (``code`` = la
+    máscara exacta que selecciona esa fila).
+    """
+
+    filename: str
+    downloads: int
+    group_id: int
+    code: str | None = None
 
 
 def _extract_year(title_text: str) -> int | None:
@@ -99,35 +116,55 @@ def search(session: HispamulaSession, query: str) -> list[SearchResult]:
     return results
 
 
-def _parse_group(table) -> tuple[int, str, list[tuple[str, int]]]:
-    """Devuelve (group_id, label, [(filename, downloads), ...]) de una tabla T2."""
-    rows: list[tuple[str, int]] = []
-    group_id: int | None = None
+def _parse_group(table) -> tuple[str, list[GroupRow]]:
+    """Devuelve (label, filas descargables) de una tabla T2.
+
+    Admite filas modernas (checkbox ``elink_<gid>_<i>``, se descargan en
+    lote) y filas legacy (enlace ``Download(<gid>,'<code>')``, cada una con
+    su propia máscara de bits).
+    """
+    rows: list[GroupRow] = []
     for tr in table.select("tr"):
+        cells = tr.select("td")
+        if len(cells) < 2:
+            continue
         icon = tr.select_one("td.ICON input[id^='elink_']")
-        if icon is None:
-            continue
-        input_id = icon.get("id", "")
-        m = re.match(r"elink_(\d+)_(\d+)", input_id)
-        if m is None:
-            continue
-        group_id = int(m.group(1))
-        anchor = tr.select_one("td a")
-        filename = anchor.get_text(" ", strip=True) if anchor else ""
+        if icon is not None:
+            m = re.match(r"elink_(\d+)_\d+", icon.get("id", ""))
+            if m is None:
+                continue
+            group_id = int(m.group(1))
+            code: str | None = None
+        else:
+            dl = tr.select_one('a[href^="javascript:Download"]')
+            if dl is None:
+                continue
+            m = DOWNLOAD_JS_RE.search(dl.get("href", ""))
+            if m is None:
+                continue
+            group_id, code = int(m.group(1)), m.group(2)
+        anchor = cells[1].select_one("a")
+        filename = (
+            anchor.get_text(" ", strip=True)
+            if anchor is not None
+            else cells[1].get_text(" ", strip=True)
+        )
         sizes = tr.select("td.SIZE")
         downloads = 0
         if len(sizes) >= 2:
             downloads = int(re.sub(r"\D", "", sizes[1].get_text()) or 0)
-        rows.append((filename, downloads))
+        rows.append(GroupRow(filename, downloads, group_id, code))
     label = ""
     heading = table.find_previous("h2")
     if heading is not None:
         label = heading.get_text(" ", strip=True)
-    return group_id or 0, label, rows
+    return label, rows
 
 
-def _download_links(session: HispamulaSession, group_id: int, count: int) -> list[Ed2kFile]:
-    code = "1" * count
+def _download_links(session: HispamulaSession, group_id: int, code: str) -> list[Ed2kFile]:
+    """Descarga las ed2k del grupo con la máscara ``code`` ('1'*n selecciona
+    todas las filas de un grupo moderno; una máscara con un único bit o '1'
+    devuelve la fila concreta de un grupo legacy)."""
     response = session.get("/ajax/download.php", params={"id": group_id, "code": code})
     soup = BeautifulSoup(response.text, "lxml")
     textarea = soup.find(id="ELINKSLIST")
@@ -153,6 +190,19 @@ def _download_links(session: HispamulaSession, group_id: int, count: int) -> lis
     return files
 
 
+def _attach_files(files: list[Ed2kFile], rows: list[GroupRow], label: str, title_id: int) -> list[Ed2kFile]:
+    """Empareja por índice fila <-> ed2k y rellena el metadato del fichero."""
+    out: list[Ed2kFile] = []
+    for row, f in zip(rows, files):
+        if row.filename:
+            f.name = row.filename
+        f.group_label = label
+        f.downloads = row.downloads
+        f.title_id = title_id
+        out.append(f)
+    return out
+
+
 def detail(session: HispamulaSession, title_id: int) -> TitleDetail:
     response = session.get("/", params={"title": title_id})
     soup = BeautifulSoup(response.text, "lxml")
@@ -166,17 +216,22 @@ def detail(session: HispamulaSession, title_id: int) -> TitleDetail:
 
     files: list[Ed2kFile] = []
     for table in soup.select("table.T2"):
-        group_id, label, rows = _parse_group(table)
-        if group_id == 0 or not rows:
+        label, rows = _parse_group(table)
+        if not rows:
             continue
-        ed2k = _download_links(session, group_id, len(rows))
-        for (filename, downloads), f in zip(rows, ed2k):
-            if filename:
-                f.name = filename
-            f.group_label = label
-            f.downloads = downloads
-            f.title_id = title_id
-            files.append(f)
+        # Grupos modernos: un lote por grupo (una petición con '1'*n);
+        # legacy: una petición por fila con su propia máscara.
+        modern = [r for r in rows if r.code is None]
+        legacy = [r for r in rows if r.code is not None]
+        if modern:
+            gid = modern[0].group_id
+            files += _attach_files(
+                _download_links(session, gid, "1" * len(modern)), modern, label, title_id
+            )
+        for row in legacy:
+            files += _attach_files(
+                _download_links(session, row.group_id, row.code), [row], label, title_id
+            )
 
     return TitleDetail(
         title_id=title_id,
