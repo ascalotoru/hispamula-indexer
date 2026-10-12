@@ -63,7 +63,10 @@ def _do_search(query: str, mode: str) -> list[tuple[Ed2kFile, list[int]]]:
         results = search(session, query)
         _search_cache.set(query, results)
     files: list[tuple[Ed2kFile, list[int]]] = []
-    for result in results[: config.MAX_RESULTS]:
+    # El RSS sync de los *arr consulta sin `q`: se limita para no superar su
+    # timeout raspando toda la portada en frío.
+    limit = config.MAX_RESULTS if query.strip() else config.RSS_MAX_RESULTS
+    for result in results[:limit]:
         if not _filter_type(result.type, mode):
             continue
         det = _detail_cache.get(result.title_id)

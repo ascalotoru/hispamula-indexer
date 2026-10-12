@@ -77,6 +77,7 @@ Todas las opciones son variables de entorno (`HISPAMULA_*`), leídas por `app/co
 | `HISPAMULA_CACHE_TTL`     | `3600`                       | vida de la caché (segundos) para búsquedas y páginas de título/enlaces |
 | `HISPAMULA_TIMEOUT`       | `30.0`                       | tiempo de espera HTTP (segundos)                    |
 | `HISPAMULA_MAX_RESULTS`   | `25`                         | máximo de títulos procesados por búsqueda           |
+| `HISPAMULA_RSS_MAX_RESULTS` | `10`                       | máximo de títulos para el RSS sync (sin `q`)        |
 | `HISPAMULA_USER_AGENT`    | `hispamula-indexer/0.1`      | cabecera User-Agent                                 |
 
 ## Desarrollo

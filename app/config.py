@@ -16,3 +16,7 @@ USER_AGENT = _env("HISPAMULA_USER_AGENT", "hispamula-indexer/0.1")
 
 # Máximo de títulos procesados por búsqueda (evita N+1 desbocado).
 MAX_RESULTS = int(_env("HISPAMULA_MAX_RESULTS", "25"))
+
+# Máximo de títulos para el RSS sync (los *arr consultan sin `q`). Se mantiene
+# bajo para no agotar su timeout (~100 s) al raspar la portada en frío.
+RSS_MAX_RESULTS = int(_env("HISPAMULA_RSS_MAX_RESULTS", "10"))
