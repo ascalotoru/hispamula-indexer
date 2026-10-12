@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4](https://github.com/ascalotoru/hispamula-indexer/compare/v1.0.3...v1.0.4) (2026-10-12)
+
+
+### Bug Fixes
+
+* acotar el RSS sync para no agotar el timeout de los *arr ([764091d](https://github.com/ascalotoru/hispamula-indexer/commit/764091dd9431e5ce5fcedcafe020b17b75eab56a))
+
 ## [1.0.3](https://github.com/ascalotoru/hispamula-indexer/compare/v1.0.2...v1.0.3) (2026-10-12)
 
 
