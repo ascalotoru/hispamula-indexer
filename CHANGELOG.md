@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/ascalotoru/hispamula-indexer/compare/v1.0.0...v1.0.1) (2026-10-12)
+
+
+### Bug Fixes
+
+* incluir enlaces de publicaciones legacy en el detalle ([d76ef39](https://github.com/ascalotoru/hispamula-indexer/commit/d76ef39cb63887d5396df0ba84da54971c1f441c))
+
 ## 1.0.0 (2026-10-11)
 
 
