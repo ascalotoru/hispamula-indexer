@@ -9,7 +9,7 @@ Un indexador [Torznab](https://torznab.readthedocs.io/)/Newznab para [hispamula.
 - **Autenticado** — inicia sesión en hispamula para acceder a los enlaces restringidos.
 - **Categorías Newznab** — mapea Película/Documental → Películas (2000) y Serie/Docuserie → TV (5000), con **subcategorías por calidad/formato** (HD, UHD, SD, WEB-DL, BluRay, x265…).
 - **Calidad en el feed** — cada `<item>` incluye la calidad del grupo en el título y los `torznab:attr` correspondientes, para que Prowlarr/*arr clasifiquen 1080p frente a UHD 4K.
-- **Scraping con límite de peticiones** — retardo configurable + caché por título.
+- **Scraping con límite de peticiones** — retardo configurable + caché TTL (`HISPAMULA_CACHE_TTL`) de búsquedas y fichas (título + enlaces) para evitar re-raspados.
 - **Docker + CI** — construye y publica una imagen de contenedor en GHCR.
 
 ## Cómo funciona
@@ -25,6 +25,8 @@ Un indexador [Torznab](https://torznab.readthedocs.io/)/Newznab para [hispamula.
 3. Para cada resultado obtiene la página del título y extrae los grupos de eD2k.
 4. Descarga la lista real de enlaces y devuelve un `<item>` de Torznab por cada archivo `ed2k://`, con su categoría/subcategorías Newznab y calidad (resolución, formato, codec).
 5. La aplicación *arr entrega la URL `ed2k://` a su cliente de descarga (aMule).
+
+Las búsquedas y las fichas (título + enlaces) se cachean durante `HISPAMULA_CACHE_TTL` segundos. Así, una consulta repetida —por ejemplo el RSS sync periódico de los *arr, que busca sin `q`— se sirve desde la caché sin volver a raspar el sitio, evitando el timeout del cliente.
 
 ## Requisitos
 
@@ -72,7 +74,7 @@ Todas las opciones son variables de entorno (`HISPAMULA_*`), leídas por `app/co
 | `HISPAMULA_PASSWORD`      | —                            | contraseña de hispamula                             |
 | `HISPAMULA_BASE_URL`      | `https://www.hispamula.org`  | URL base del sitio                                  |
 | `HISPAMULA_REQUEST_DELAY` | `1.0`                        | segundos entre peticiones                           |
-| `HISPAMULA_CACHE_TTL`     | `600`                        | vida de la caché (segundos) para páginas de título/enlaces |
+| `HISPAMULA_CACHE_TTL`     | `3600`                       | vida de la caché (segundos) para búsquedas y páginas de título/enlaces |
 | `HISPAMULA_TIMEOUT`       | `30.0`                       | tiempo de espera HTTP (segundos)                    |
 | `HISPAMULA_MAX_RESULTS`   | `25`                         | máximo de títulos procesados por búsqueda           |
 | `HISPAMULA_USER_AGENT`    | `hispamula-indexer/0.1`      | cabecera User-Agent                                 |
