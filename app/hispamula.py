@@ -11,6 +11,7 @@ from .session import HispamulaSession
 
 TITLE_ID_RE = re.compile(r"title=(\d+)")
 YEAR_RE = re.compile(r"\b(\d{4})\b")
+QUERY_YEAR_RE = re.compile(r"\s+\d{4}\s*$")
 ED2K_RE = re.compile(r"ed2k://\|file\|([^|]*)\|(\d+)\|([0-9A-Fa-f]{32})\|/")
 DOWNLOAD_JS_RE = re.compile(r"Download\((\d+),'([01]+)'\)")
 
@@ -81,7 +82,18 @@ def _extract_type(root) -> str:
     return ""
 
 
+def normalize_query(query: str) -> str:
+    """Quita el año final que añaden los *arr al título.
+
+    hispamula busca por título o título original (substring); un año
+    pegado ("Les Chevaliers du ciel 2005") no aparece en ninguno de los
+    dos y la búsqueda devuelve 0 resultados.
+    """
+    return QUERY_YEAR_RE.sub("", query).strip()
+
+
 def search(session: HispamulaSession, query: str) -> list[SearchResult]:
+    query = normalize_query(query)
     response = session.get("/", params={"view": "search", "q": query})
     soup = BeautifulSoup(response.text, "lxml")
     results: list[SearchResult] = []

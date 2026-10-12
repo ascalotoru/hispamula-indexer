@@ -13,3 +13,11 @@ def test_search_parse(read_fixture):
     assert terminator.type == "Película"
     assert terminator.year == 1984
     assert "Terminator" in terminator.title
+
+
+def test_search_quita_el_anio_final(read_fixture):
+    """Radarr añade el año al título y rompe la búsqueda de hispamula
+    (el año no está en el título ni en el original)."""
+    session = FakeSession(page=read_fixture("search.html"))
+    search(session, "Les Chevaliers du ciel 2005")
+    assert session.calls == [("/", {"view": "search", "q": "Les Chevaliers du ciel"})]
