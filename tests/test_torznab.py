@@ -1,6 +1,6 @@
 from app import __version__
 from app.hispamula import Ed2kFile, torznab_subcategories
-from app.torznab import capabilities, feed
+from app.torznab import capabilities, feed, to_magnet
 
 
 def test_caps_exposes_package_version():
@@ -25,16 +25,18 @@ def test_caps_declares_standard_subcats():
 
 def test_feed_escapes_and_item():
     f = Ed2kFile(
-        url="ed2k://|file|a&b|10|ABC|/",
+        url="ed2k://|file|a&b|10|0123456789ABCDEF0123456789ABCDEF|/",
         name='a & "b"',
         size=10,
-        hash="ABC",
+        hash="0123456789ABCDEF0123456789ABCDEF",
         group_id=1,
         group_label="x",
     )
     xml = feed([(f, [2000, 2040])])
     assert 'a &amp; "b" [x]' in xml
-    assert 'url="ed2k://|file|a&amp;b|10|ABC|/"' in xml
+    assert 'type="application/x-bittorrent"' in xml
+    assert "magnet:?xt=urn:btih:" in xml
+    assert "&amp;tr=http://amulerr" in xml
     assert "<category>2000</category>" in xml
     assert "<category>2040</category>" in xml
     assert 'torznab:attr name="category" value="2040"' in xml
@@ -45,10 +47,10 @@ def test_feed_escapes_and_item():
 
 def test_feed_includes_page_link():
     f = Ed2kFile(
-        url="ed2k://|file|a|10|ABC|/",
+        url="ed2k://|file|a|10|0123456789ABCDEF0123456789ABCDEF|/",
         name="a",
         size=10,
-        hash="ABC",
+        hash="0123456789ABCDEF0123456789ABCDEF",
         group_id=1,
         group_label="",
         title_id=41554,
@@ -78,6 +80,16 @@ def test_feed_includes_quality_label():
     assert "Linternas 1x01.mkv [UHD 4K: mkv (HEVC 10b-AC3)]" in xml
     assert "<category>5040</category>" in xml
     assert "<category>5045</category>" in xml
+
+
+def test_to_magnet_matches_amulerr_format():
+    # Vector real de aMulerr: btih = base32(ed2k_hash + 4 bytes de relleno),
+    # y dn/xl/tr que su shim qBittorrent sabe decodificar de vuelta al ed2k.
+    magnet = to_magnet("42DA861488152E607AD69BB2DE5E1D05", "Sky Fighters.mkv", 970972587)
+    assert magnet == (
+        "magnet:?xt=urn:btih:ILNIMFEICUXGA6WWTOZN4XQ5AUAAAAAA"
+        "&dn=Sky%20Fighters.mkv&xl=970972587&tr=http://amulerr"
+    )
 
 
 def test_subcategories_por_calidad():

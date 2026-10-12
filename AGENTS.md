@@ -38,7 +38,8 @@ Torznab indexer for hispamula.org (eMule/eD2k links). Python 3.12 + FastAPI. Ser
 - Served at `/`, `/api`, and `/api/api` (Prowlarr appends `/api` to the base URL). Endpoints: `t=caps`, `t=search`, `t=movie`, `t=tvsearch`.
 - Every item MUST include `<pubDate>` — Prowlarr rejects feeds without it.
 - Every item MUST include the Newznab category (parent + subcategories by quality, see `torznab_subcategories` in `app/hispamula.py`) via `<category>` elements and `torznab:attr name="category"`.
-- Every item MUST also set `<torznab:attr name="size">` — Prowlarr ignores the `<size>` element for `application/x-ed2k` enclosures.
+- Every item's `<enclosure>` is an **aMulerr magnet** (`to_magnet` in `app/torznab.py`: `magnet:?xt=urn:btih:<base32(ed2k_hash+4 ceros)>&dn=&xl=&tr=http://amulerr`) with `type="application/x-bittorrent"`. Radarr discards `application/x-ed2k` enclosures, and the aMulerr qBittorrent download client only accepts this magnet format (not raw `ed2k://`).
+- Every item MUST also set `<torznab:attr name="size">` — the *arr ignore the `<size>` element alone.
 
 ## Security (repo is PUBLIC)
 

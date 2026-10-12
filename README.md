@@ -23,8 +23,8 @@ Un indexador [Torznab](https://torznab.readthedocs.io/)/Newznab para [hispamula.
 1. El indexador recibe una petición de búsqueda Torznab (`q`, con `season`/`ep` opcionales).
 2. Busca en hispamula (`/?view=search&q=…`) y analiza la lista de resultados.
 3. Para cada resultado obtiene la página del título y extrae los grupos de eD2k.
-4. Descarga la lista real de enlaces y devuelve un `<item>` de Torznab por cada archivo `ed2k://`, con su categoría/subcategorías Newznab y calidad (resolución, formato, codec).
-5. La aplicación *arr entrega la URL `ed2k://` a su cliente de descarga (aMule).
+4. Descarga la lista real de enlaces y devuelve un `<item>` de Torznab por cada archivo: el `ed2k://` se envuelve en un **magnet compatible con aMulerr** (`application/x-bittorrent`), con su categoría/subcategorías Newznab y calidad (resolución, formato, codec).
+5. La aplicación *arr entrega el magnet a un cliente de descarga **aMulerr**; aMulerr lo convierte de vuelta a `ed2k://` y lo añade a aMule.
 
 Las búsquedas y las fichas (título + enlaces) se cachean durante `HISPAMULA_CACHE_TTL` segundos. Así, una consulta repetida —por ejemplo el RSS sync periódico de los *arr, que busca sin `q`— se sirve desde la caché sin volver a raspar el sitio, evitando el timeout del cliente.
 
@@ -62,7 +62,7 @@ Añade un indexador **Generic Torznab** apuntando al servicio. La API se sirve e
 - **Prowlarr** añade `/api` a la URL base, así que define la URL base como `http://<host>:8080` (sin `/api`). Ambas formas funcionan.
 - **Jackett** (Torznab personalizado) — usa la URL completa `http://<host>:8080/api`.
 
-Configura el cliente de descarga de tu aplicación *arr para que apunte a tu puente eMule (por ejemplo aMule / amulerr), que acepta las URLs `ed2k://` devueltas por el indexador.
+Configura el cliente de descarga de tu aplicación *arr como **qBittorrent** apuntando a [aMulerr](https://github.com/isc30/aMulerr) (`http://<host>:3000`). aMulerr recibe el magnet que emite el indexador, lo convierte de vuelta a `ed2k://` y lo añade a aMule.
 
 ## Configuración
 

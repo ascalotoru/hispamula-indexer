@@ -2,13 +2,39 @@
 
 from __future__ import annotations
 
+import base64
 import time
 from email.utils import formatdate
+from urllib.parse import quote
 from xml.sax.saxutils import escape, quoteattr
 
 from . import __version__
 from .config import BASE_URL
 from .hispamula import Ed2kFile
+
+AMULERR_TRACKER = "http://amulerr"
+
+
+def to_btih(ed2k_hash: str) -> str:
+    """Hash ed2k (32 hex) → btih base32 que espera aMulerr.
+
+    aMulerr codifica los 16 bytes del hash ed2k en un buffer de 20 bytes
+    (los 4 últimos a cero) y lo pasa a base32 en mayúsculas.
+    """
+    raw = bytes.fromhex(ed2k_hash) + b"\x00" * 4
+    return base64.b32encode(raw).decode("ascii")
+
+
+def to_magnet(ed2k_hash: str, name: str, size: int) -> str:
+    """Magnet que el shim qBittorrent de aMulerr convierte de vuelta a ed2k.
+
+    Radarr exige un enclosure ``application/x-bittorrent`` y aMulerr sólo
+    acepta este formato; el ``ed2k://`` crudo no le sirve.
+    """
+    return (
+        f"magnet:?xt=urn:btih:{to_btih(ed2k_hash)}"
+        f"&dn={quote(name, safe='')}&xl={size}&tr={AMULERR_TRACKER}"
+    )
 
 
 def capabilities() -> str:
@@ -57,7 +83,7 @@ def _item_xml(f: Ed2kFile, categories: list[int], pubdate: str) -> str:
     guid = f.hash
     label = f" [{f.group_label}]" if f.group_label else ""
     title = escape(f"{f.name}{label}")
-    url = quoteattr(f.url)
+    magnet = quoteattr(to_magnet(f.hash, f.name, f.size))
     seeders = max(f.downloads, 0)
     cat_tags = "".join(f"  <category>{c}</category>\n" for c in categories)
     cat_attrs = "".join(
@@ -76,7 +102,7 @@ def _item_xml(f: Ed2kFile, categories: list[int], pubdate: str) -> str:
         f"{cat_attrs}"
         f'  <torznab:attr name="seeders" value="{seeders}"/>\n'
         f'  <torznab:attr name="peers" value="{seeders}"/>\n'
-        f"  <enclosure url={url} length=\"{f.size}\" type=\"application/x-ed2k\"/>\n"
+        f"  <enclosure url={magnet} length=\"{f.size}\" type=\"application/x-bittorrent\"/>\n"
         "</item>\n"
     )
 
