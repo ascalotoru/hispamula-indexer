@@ -47,7 +47,6 @@ Torznab indexer for hispamula.org (eMule/eD2k links). Python 3.12 + FastAPI. Ser
 
 ## Deploy
 
-- Manifests are NOT in this repo; they live in gitops repo `<redacted>` under `<redacted>` (namespace `<redacted>`, image `ghcr.io/ascalotoru/hispamula-indexer`).
 - CI (`.github/workflows/build.yaml`) runs tests then builds+pushes the image to GHCR: `latest` on push to `master`, semver tags `X.Y.Z`/`X.Y` on tag `v*`.
 
 ## Releases
@@ -57,7 +56,6 @@ Torznab indexer for hispamula.org (eMule/eD2k links). Python 3.12 + FastAPI. Ser
 - Para publicar: fusionar ese PR. Al fusionarlo se sube `__version__`, se regenera `CHANGELOG.md`, se crea el tag `vX.Y.Z` (bump: `feat:` → minor, `fix:` → patch, `BREAKING CHANGE` → major) y el Release de GitHub.
 - Al fusionar el PR de release, `release.yaml` dispara `build.yaml` (por `workflow_dispatch`, exento de la regla anti-recursión de GitHub) sobre el tag creado, que construye la imagen con etiqueta semver (`X.Y.Z`, `X.Y`). Tags `v*` pusheados manualmente también disparan el build. En push a `master` solo se sube `latest` (dev).
 - Bootstrap: `.release-please-manifest.json` arranca en `0.0.0`; la estrategia `simple` fija la primera release en `1.0.0`.
-- Flux (repo gitops `<redacted>`) debe seguir un rango semver de la imagen, no `latest` — pendiente de migrar.
 
 ## Version parity
 

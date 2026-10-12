@@ -25,7 +25,7 @@
 2. **Permisos insuficientes**: release-please fallaría creando PR/tag/release. → `permissions: contents: write, pull-requests: write` en `release.yaml`.
 3. **Bootstrap de versión**: primera release en `0.1.0` tras el `feat:` del setup (manifest `0.0.0`).
 4. **Imagen sin etiquetar en release**: si el trigger de tag no funciona, no hay imagen semver. → verificado en el primer release con `type=semver`.
-5. **Flux sigue a `latest`**: hasta migrar el repo gitops a rango semver, los releases no se despliegan solos. → fuera de este repo (seguimiento anotado).
+5. **Despliegue en `latest`**: hasta migrar los manifiestos (fuera de este repo) a un rango semver, los releases no se despliegan solos. → fuera de este repo (seguimiento anotado).
 
 ---
 
@@ -206,7 +206,7 @@ git commit -m "ci: etiquetar imagen con versión semántica en releases"
 
 - [ ] **Step 1: Añadir la sección "Releases" a `AGENTS.md`**
 
-Documentar: la versión vive en `app/__init__.py`; release-please mantiene un PR de release que acumula commits convencionales; para publicar se fusiona ese PR, lo que sube `__version__`, crea el tag `vX.Y.Z` y el Release; el tag dispara la imagen `X.Y.Z`; Flux (en el repo gitops) debe seguir un rango semver.
+Documentar: la versión vive en `app/__init__.py`; release-please mantiene un PR de release que acumula commits convencionales; para publicar se fusiona ese PR, lo que sube `__version__`, crea el tag `vX.Y.Z` y el Release; el tag dispara la imagen `X.Y.Z`; el despliegue debe seguir un rango semver.
 
 - [ ] **Step 2: Commit**
 
@@ -219,4 +219,4 @@ git commit -m "docs: documentar flujo de releases"
 
 ## Seguimiento (fuera de este repo)
 
-Migrar en `<redacted>` (namespace `<redacted>`) la referencia de la imagen de `latest` a un rango semver (p. ej. `1.x`), para que los releases se desplieguen automáticamente.
+Migrar la referencia de la imagen de `latest` a un rango semver (p. ej. `1.x`) en los manifiestos de despliegue, para que los releases se desplieguen automáticamente.

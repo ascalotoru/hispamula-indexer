@@ -20,9 +20,8 @@ torznab, en vez del `0.1` hardcodeado actual.
 
 ## No objetivos
 
-- No se implementa el cambio del repo gitops (`<redacted>`); queda como
-  seguimiento. Hasta migrar Flux a un rango semver, los releases no se
-  despliegan solos.
+- No se implementa el despliegue de los releases (los manifiestos viven fuera de
+  este repo); queda como seguimiento.
 - No se introduce `pyproject.toml`: el proyecto no es un paquete, es un servicio.
 
 ## Restricciones
