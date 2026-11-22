@@ -8,7 +8,7 @@ Un indexador [Torznab](https://torznab.readthedocs.io/)/Newznab para [hispamula.
 - **Extracción real de eD2k** — obtiene los enlaces `ed2k://` reales (hash + tamaño), no sólo los títulos.
 - **Autenticado** — inicia sesión en hispamula para acceder a los enlaces restringidos.
 - **Categorías Newznab** — mapea Película/Documental → Películas (2000) y Serie/Docuserie → TV (5000), con **subcategorías por calidad/formato** (HD, UHD, SD, WEB-DL, BluRay, x265…).
-- **Calidad en el feed** — cada `<item>` incluye la calidad del grupo en el título y los `torznab:attr` correspondientes, para que Prowlarr/*arr clasifiquen 1080p frente a UHD 4K.
+- **Calidad en el feed** — cada `<item>` incluye la calidad del grupo en el título y los `torznab:attr` correspondientes, para que Prowlarr/*arr clasifiquen 1080p frente a UHD 4K. En películas el título lleva además el año de la ficha (`Nombre (2020) [BDrip…]`): Radarr descarta con *Unable to parse release* todo release sin año.
 - **Scraping con límite de peticiones** — retardo configurable + caché TTL (`HISPAMULA_CACHE_TTL`) de búsquedas y fichas (título + enlaces) para evitar re-raspados.
 - **Observabilidad de caché** — `GET /status` informa del estado de la caché y de si las novedades de `atom.xml` ya están cacheadas (`caliente`), para anticipar el RSS sync de los *arr.
 - **Docker + CI** — construye y publica una imagen de contenedor en GHCR.
