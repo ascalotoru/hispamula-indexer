@@ -36,6 +36,14 @@ class TTLCache:
         with self._lock:
             self._data[key] = (time.monotonic() + self._ttl, value)
 
+    def size(self) -> int:
+        """Nº de entradas vivas (descarta las expiradas)."""
+        with self._lock:
+            now = time.monotonic()
+            for key in [k for k, (expires, _) in self._data.items() if now >= expires]:
+                del self._data[key]
+            return len(self._data)
+
     def clear(self) -> None:
         with self._lock:
             self._data.clear()

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 
 from bs4 import BeautifulSoup
@@ -14,6 +15,7 @@ YEAR_RE = re.compile(r"\b(\d{4})\b")
 QUERY_YEAR_RE = re.compile(r"\s+\d{4}\s*$")
 ED2K_RE = re.compile(r"ed2k://\|file\|([^|]*)\|(\d+)\|([0-9A-Fa-f]{32})\|/")
 DOWNLOAD_JS_RE = re.compile(r"Download\((\d+),'([01]+)'\)")
+ATOM_NS = {"atom": "http://www.w3.org/2005/Atom"}
 
 MOVIE_TYPES = {"Película", "Documental"}
 TV_TYPES = {"Serie", "Docuserie"}
@@ -126,6 +128,25 @@ def search(session: HispamulaSession, query: str) -> list[SearchResult]:
             )
         )
     return results
+
+
+def novedades(session: HispamulaSession) -> list[int]:
+    """IDs de título del feed Atom de novedades.
+
+    Una sola petición barata (sin el N+1 de las fichas); sirve para saber
+    qué títulos recientes están en caché sin raspar la portada.
+    """
+    response = session.get("/atom.xml")
+    root = ET.fromstring(response.text)
+    ids: list[int] = []
+    for entry in root.findall("atom:entry", ATOM_NS):
+        link = entry.find("atom:link", ATOM_NS)
+        if link is None:
+            continue
+        match = TITLE_ID_RE.search(link.get("href", ""))
+        if match is not None:
+            ids.append(int(match.group(1)))
+    return ids
 
 
 def _parse_group(table) -> tuple[str, list[GroupRow]]:

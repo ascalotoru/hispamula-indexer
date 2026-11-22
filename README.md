@@ -10,6 +10,7 @@ Un indexador [Torznab](https://torznab.readthedocs.io/)/Newznab para [hispamula.
 - **Categorías Newznab** — mapea Película/Documental → Películas (2000) y Serie/Docuserie → TV (5000), con **subcategorías por calidad/formato** (HD, UHD, SD, WEB-DL, BluRay, x265…).
 - **Calidad en el feed** — cada `<item>` incluye la calidad del grupo en el título y los `torznab:attr` correspondientes, para que Prowlarr/*arr clasifiquen 1080p frente a UHD 4K.
 - **Scraping con límite de peticiones** — retardo configurable + caché TTL (`HISPAMULA_CACHE_TTL`) de búsquedas y fichas (título + enlaces) para evitar re-raspados.
+- **Observabilidad de caché** — `GET /status` informa del estado de la caché y de si las novedades de `atom.xml` ya están cacheadas (`caliente`), para anticipar el RSS sync de los *arr.
 - **Docker + CI** — construye y publica una imagen de contenedor en GHCR.
 
 ## Cómo funciona
@@ -27,6 +28,19 @@ Un indexador [Torznab](https://torznab.readthedocs.io/)/Newznab para [hispamula.
 5. La aplicación *arr entrega el magnet a un cliente de descarga **aMulerr**; aMulerr lo convierte de vuelta a `ed2k://` y lo añade a aMule.
 
 Las búsquedas y las fichas (título + enlaces) se cachean durante `HISPAMULA_CACHE_TTL` segundos. Así, una consulta repetida —por ejemplo el RSS sync periódico de los *arr, que busca sin `q`— se sirve desde la caché sin volver a raspar el sitio, evitando el timeout del cliente.
+
+## Estado y observabilidad
+
+Además de las rutas Torznab, el servicio expone:
+
+- `GET /healthz` — liveness: `{"status": "ok"}`.
+- `GET /status` — estado de la caché. Compara las novedades de [`atom.xml`](https://www.hispamula.org/atom.xml) con las fichas cacheadas y devuelve `caliente` (todas las novedades ya en caché). Sirve para saber si el próximo RSS sync de los *arr se servirá desde caché (rápido) o en frío (lento, ~100 s).
+
+```json
+{"search_cache": 0, "detail_cache": 5, "novedades_total": 5, "novedades_en_cache": 5, "caliente": true}
+```
+
+`/status` hace una petición a hispamula (solo el feed `atom.xml`).
 
 ## Requisitos
 

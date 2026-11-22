@@ -15,6 +15,7 @@ from .hispamula import (
     TV_TYPES,
     HispamulaSession,
     detail,
+    novedades,
     search,
     torznab_subcategories,
 )
@@ -101,3 +102,21 @@ def api(request: Request) -> Response:
 @app.get("/healthz")
 def healthz() -> dict:
     return {"status": "ok"}
+
+
+@app.get("/status")
+def status() -> dict:
+    """Observabilidad: ¿está la caché caliente para el RSS sync de *arr?
+
+    ``caliente`` compara las novedades del atom.xml con ``_detail_cache``.
+    Cuesta 1 petición a hispamula (solo el feed).
+    """
+    ids = novedades(get_session())
+    en_cache = sum(1 for tid in ids if _detail_cache.get(tid) is not None)
+    return {
+        "search_cache": _search_cache.size(),
+        "detail_cache": _detail_cache.size(),
+        "novedades_total": len(ids),
+        "novedades_en_cache": en_cache,
+        "caliente": bool(ids) and en_cache == len(ids),
+    }

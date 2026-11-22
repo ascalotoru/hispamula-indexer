@@ -31,6 +31,21 @@ def test_cache_clear_vacia():
     assert cache.get("a") is None
 
 
+def test_size_cuenta_entradas_vivas():
+    cache = TTLCache(ttl=60)
+    assert cache.size() == 0
+    cache.set("a", 1)
+    cache.set("b", 2)
+    assert cache.size() == 2
+
+
+def test_size_ignora_expiradas():
+    cache = TTLCache(ttl=0.01)
+    cache.set("a", 1)
+    time.sleep(0.02)
+    assert cache.size() == 0
+
+
 def test_do_search_limita_el_rss(monkeypatch):
     """El RSS sync (sin q) procesa pocos títulos para no agotar el timeout
     de los *arr (100 s) al raspar toda la portada en frío."""
