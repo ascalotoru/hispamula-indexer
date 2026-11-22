@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/ascalotoru/hispamula-indexer/compare/v1.1.0...v1.1.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* incluir el año en el nombre del magnet para el import de Radarr ([35f0244](https://github.com/ascalotoru/hispamula-indexer/commit/35f02449bbe9b21fd39ddd267f64e0720dfb6373))
+
 ## [1.1.0](https://github.com/ascalotoru/hispamula-indexer/compare/v1.0.4...v1.1.0) (2026-11-22)
 
 
