@@ -39,7 +39,7 @@ Torznab indexer for hispamula.org (eMule/eD2k links). Python 3.12 + FastAPI. Ser
 
 - Served at `/`, `/api`, and `/api/api` (Prowlarr appends `/api` to the base URL). Endpoints: `t=caps`, `t=search`, `t=movie`, `t=tvsearch`.
 - Every item MUST include `<pubDate>` — Prowlarr rejects feeds without it.
-- Movie item titles MUST carry the year from the title page (`Nombre (2020) [group label]`, year before the bracket). Radarr rejects year-less names as `Unable to parse release`. Only video extensions get the year: appending it to a `.srt` made Radarr treat the subtitle as a valid release.
+- Movie item titles MUST carry the year from the title page (`Nombre (2020) [group label]`, year before the bracket). Radarr rejects year-less names as `Unable to parse release`. The magnet `dn` uses that same year-suffixed filename: aMulerr names the aMule file from `dn`, and Radarr parses the downloaded filename on import (year-less → `Movie title mismatch`, import blocked). Only video extensions get the year: appending it to a `.srt` made Radarr treat the subtitle as a valid release.
 - Every item MUST include the Newznab category (parent + subcategories by quality, see `torznab_subcategories` in `app/hispamula.py`) via `<category>` elements and `torznab:attr name="category"`.
 - Every item's `<enclosure>` is an **aMulerr magnet** (`to_magnet` in `app/torznab.py`: `magnet:?xt=urn:btih:<base32(ed2k_hash+4 zero bytes)>&dn=&xl=&tr=http://amulerr`) with `type="application/x-bittorrent"`. Radarr discards `application/x-ed2k` enclosures, and the aMulerr qBittorrent download client only accepts this magnet format (not raw `ed2k://`).
 - Every item MUST also set `<torznab:attr name="size">` — the *arr ignore the `<size>` element alone.
