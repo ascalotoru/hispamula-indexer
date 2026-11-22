@@ -79,6 +79,7 @@ def _do_search(query: str, mode: str) -> list[tuple[Ed2kFile, list[int]]]:
                 continue
             _detail_cache.set(result.title_id, det)
         for f in det.files:
+            f.year = det.year
             cats = torznab_subcategories(det.type, f"{f.name} {f.group_label}")
             files.append((f, cats))
     return files

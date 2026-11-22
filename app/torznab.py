@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import base64
+import re
 import time
 from email.utils import formatdate
+from os.path import splitext
 from urllib.parse import quote
 from xml.sax.saxutils import escape, quoteattr
 
@@ -13,6 +15,13 @@ from .config import BASE_URL
 from .hispamula import Ed2kFile
 
 AMULERR_TRACKER = "http://amulerr"
+
+# Radarr no puede parsear un release sin año. Sólo se añade a ficheros de
+# vídeo: en un .srt con el mismo nombre haría que Radarr lo aprobase.
+VIDEO_EXTS = {
+    ".3gp", ".avi", ".divx", ".iso", ".m2ts", ".m4v", ".mkv", ".mov",
+    ".mp4", ".mpeg", ".mpg", ".ogm", ".ts", ".vob", ".webm", ".wmv",
+}
 
 
 def to_btih(ed2k_hash: str) -> str:
@@ -79,10 +88,27 @@ def capabilities() -> str:
     )
 
 
+def _item_title(f: Ed2kFile, categories: list[int]) -> str:
+    """Añade el año de la ficha antes de la etiqueta del grupo si el nombre
+    del fichero no lo lleva: ``Nombre (2020) [BDrip 1080p: ...]``.
+
+    Radarr descarta con "Unable to parse release" todo título sin año.
+    """
+    stem, ext = splitext(f.name)
+    if (
+        f.year
+        and ext.lower() in VIDEO_EXTS
+        and 2000 in categories
+        and not re.search(rf"\b{f.year}\b", f.name)
+    ):
+        return f"{stem} ({f.year})"
+    return f.name
+
+
 def _item_xml(f: Ed2kFile, categories: list[int], pubdate: str) -> str:
     guid = f.hash
     label = f" [{f.group_label}]" if f.group_label else ""
-    title = escape(f"{f.name}{label}")
+    title = escape(f"{_item_title(f, categories)}{label}")
     magnet = quoteattr(to_magnet(f.hash, f.name, f.size))
     seeders = max(f.downloads, 0)
     cat_tags = "".join(f"  <category>{c}</category>\n" for c in categories)

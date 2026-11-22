@@ -11,6 +11,7 @@ def test_detail_collection(read_fixture):
     det = detail(session, 41554)
     assert det.title_id == 41554
     assert det.type == "Película"
+    assert det.year == 1977
     assert torznab_category(det.type) == 2000
     assert len(det.files) == 44
     first = det.files[0]

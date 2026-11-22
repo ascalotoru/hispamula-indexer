@@ -59,6 +59,41 @@ def test_feed_includes_page_link():
     assert "<comments>https://www.hispamula.org/?title=41554</comments>" in xml
 
 
+def _movie_file(name: str, year: int | None = None) -> Ed2kFile:
+    return Ed2kFile(
+        url="ed2k://|file|a|10|0123456789ABCDEF0123456789ABCDEF|/",
+        name=name,
+        size=10,
+        hash="0123456789ABCDEF0123456789ABCDEF",
+        group_id=1,
+        group_label="HD 1080p: mkv (HEVC 10b-AC3)",
+        year=year,
+    )
+
+
+def test_feed_anade_anio_para_radarr():
+    """Sin año Radarr rechaza el release con "Unable to parse release"."""
+    xml = feed([(_movie_file("El Robo Del Siglo.mkv", 2020), [2000, 2040])])
+    assert "<title>El Robo Del Siglo (2020) [HD 1080p: mkv (HEVC 10b-AC3)]</title>" in xml
+
+
+def test_feed_no_duplica_anio():
+    xml = feed([(_movie_file("Los Ladrones (2022).mkv", 2022), [2000, 2080])])
+    assert "<title>Los Ladrones (2022).mkv [HD 1080p" in xml
+    assert "Los Ladrones (2022) (2022)" not in xml
+
+
+def test_feed_no_anade_anio_a_subtitulos():
+    """Un .srt con año se consideraría release válido y Radarr lo descargaría."""
+    xml = feed([(_movie_file("El Robo Del Siglo.srt", 2020), [2000, 2040])])
+    assert "<title>El Robo Del Siglo.srt [HD 1080p" in xml
+
+
+def test_feed_no_anade_anio_a_series():
+    xml = feed([(_movie_file("Terminator.mkv", 2008), [5000, 5040])])
+    assert "<title>Terminator.mkv [HD 1080p" in xml
+
+
 def test_feed_includes_quality_label():
     def make(hash_, label):
         return Ed2kFile(

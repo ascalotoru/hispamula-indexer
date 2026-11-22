@@ -41,6 +41,7 @@ class Ed2kFile:
     group_label: str
     downloads: int = 0
     title_id: int = 0
+    year: int | None = None
 
 
 @dataclass
