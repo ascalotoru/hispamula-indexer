@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0](https://github.com/ascalotoru/hispamula-indexer/compare/v1.0.4...v1.1.0) (2026-11-22)
+
+
+### Features
+
+* exponer estado de caché con /status ([39d3bbd](https://github.com/ascalotoru/hispamula-indexer/commit/39d3bbd5b0f45c6e3261d15743446da1f8215100))
+
+
+### Bug Fixes
+
+* añadir el año de la ficha al título de las películas ([11ba0ec](https://github.com/ascalotoru/hispamula-indexer/commit/11ba0ec875192f8a18b785a6df48bdbc3cf06497))
+* fijar runner a ubuntu-24.04 por la falta de Python 3.12.9 en 26.04 ([4834c77](https://github.com/ascalotoru/hispamula-indexer/commit/4834c7717d325dc2927cb6d020d64323bea24b2c))
+
 ## [1.0.4](https://github.com/ascalotoru/hispamula-indexer/compare/v1.0.3...v1.0.4) (2026-10-12)
 
 
