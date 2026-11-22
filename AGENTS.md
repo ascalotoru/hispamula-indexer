@@ -4,12 +4,13 @@ Torznab indexer for hispamula.org (eMule/eD2k links). Python 3.12 + FastAPI. Ser
 
 ## Layout
 
-- `app/main.py` — FastAPI routes (torznab endpoints). Entrypoint: `uvicorn app.main:app`.
-- `app/hispamula.py` — scraping (search, detail, ed2k extraction) + dataclasses.
+- `app/main.py` — FastAPI routes (torznab endpoints + `/healthz`, `/status`). Entrypoint: `uvicorn app.main:app`.
+- `app/hispamula.py` — scraping (search, detail, ed2k extraction, `novedades` = atom.xml parsing) + dataclasses.
 - `app/session.py` — httpx client, auth cookie, request throttling.
 - `app/torznab.py` — caps + RSS item XML builders.
+- `app/cache.py` — in-memory, thread-safe TTL cache (searches and details).
 - `app/config.py` — all settings via `HISPAMULA_*` env vars.
-- `tests/` — pytest; `fixtures/*.html` are real scraped pages. Tests never hit the network (`FakeSession` in `conftest.py`).
+- `tests/` — pytest; `fixtures/*` are real scraped pages/feed. Tests never hit the network (`FakeSession` in `conftest.py`).
 
 ## Commands
 
@@ -22,10 +23,11 @@ Torznab indexer for hispamula.org (eMule/eD2k links). Python 3.12 + FastAPI. Ser
 
 - Search: `GET /?view=search&q=<query>` → results in `tr.T1`, pagination `&page=N`.
 - Detail: `GET /?title=<id>`. eD2k links are login-gated and listed as groups (`table.T2`). Groups come in two shapes:
-  - **Modernos**: checkboxes `elink_<group>_<i>` + button `DownloadSelected(<group>, <count>)`. Fetch links in a single batch with `code='1'*count`.
-  - **Legacy** (publicaciones antiguas): each row is a `javascript:Download(<group>,'<code>')` link, no checkboxes. Must be fetched **per row** with its own `code`; `_parse_group` marks them with `code` set (None = batch). Do not skip them or their files are lost.
+  - **Modern**: checkboxes `elink_<group>_<i>` + button `DownloadSelected(<group>, <count>)`. Fetch links in a single batch with `code='1'*count`.
+  - **Legacy** (old publications): each row is a `javascript:Download(<group>,'<code>')` link, no checkboxes. Must be fetched **per row** with its own `code`; `_parse_group` marks them with `code` set (None = batch). Do not skip them or their files are lost.
 - Fetch links: `GET /ajax/download.php?id=<group>&code=<mask>` → `<textarea id="ELINKSLIST">` with one `ed2k://|file|NAME|SIZE|HASH|/` per line. `code` is a bitmask string ('1' at position *i* = select checkbox *i*).
 - Correlate rows ↔ ed2k by **index** (row filename = display name; ed2k `NAME` is dotted). Do not match by name.
+- Recent releases: `GET /atom.xml` (Atom) lists recent titles with their `title_id`; `novedades()` parses it. Cheap alternative to the front page, used by `/status` to know what is cached.
 
 ## Auth
 
@@ -38,9 +40,10 @@ Torznab indexer for hispamula.org (eMule/eD2k links). Python 3.12 + FastAPI. Ser
 - Served at `/`, `/api`, and `/api/api` (Prowlarr appends `/api` to the base URL). Endpoints: `t=caps`, `t=search`, `t=movie`, `t=tvsearch`.
 - Every item MUST include `<pubDate>` — Prowlarr rejects feeds without it.
 - Every item MUST include the Newznab category (parent + subcategories by quality, see `torznab_subcategories` in `app/hispamula.py`) via `<category>` elements and `torznab:attr name="category"`.
-- Every item's `<enclosure>` is an **aMulerr magnet** (`to_magnet` in `app/torznab.py`: `magnet:?xt=urn:btih:<base32(ed2k_hash+4 ceros)>&dn=&xl=&tr=http://amulerr`) with `type="application/x-bittorrent"`. Radarr discards `application/x-ed2k` enclosures, and the aMulerr qBittorrent download client only accepts this magnet format (not raw `ed2k://`).
+- Every item's `<enclosure>` is an **aMulerr magnet** (`to_magnet` in `app/torznab.py`: `magnet:?xt=urn:btih:<base32(ed2k_hash+4 zero bytes)>&dn=&xl=&tr=http://amulerr`) with `type="application/x-bittorrent"`. Radarr discards `application/x-ed2k` enclosures, and the aMulerr qBittorrent download client only accepts this magnet format (not raw `ed2k://`).
 - Every item MUST also set `<torznab:attr name="size">` — the *arr ignore the `<size>` element alone.
 - The RSS sync (the *arr query **without `q`**) is capped to `HISPAMULA_RSS_MAX_RESULTS` (default 10). Without it, the cold front-page scrape (N+1, ~100 s) exceeds the *arr ~100 s indexer timeout and the indexer gets disabled.
+- Non-Torznab routes: `GET /healthz` (liveness) and `GET /status` (cache state; `caliente` = `atom.xml` recent releases already cached). Documented in `README.md`.
 
 ## Security (repo is PUBLIC)
 
@@ -53,16 +56,21 @@ Torznab indexer for hispamula.org (eMule/eD2k links). Python 3.12 + FastAPI. Ser
 
 ## Releases
 
-- La única fuente de verdad de la versión es `__version__` en `app/__init__.py` (en una línea anotada con `# x-release-please-version`, que release-please usa para actualizarla); el caps de torznab la expone en `appversion`/`version`.
-- `release-please` (`.github/workflows/release.yaml`) mantiene un PR de release (`release-please/branches/master → master`) que acumula los commits convencionales desde el último release.
-- Para publicar: fusionar ese PR. Al fusionarlo se sube `__version__`, se regenera `CHANGELOG.md`, se crea el tag `vX.Y.Z` (bump: `feat:` → minor, `fix:` → patch, `BREAKING CHANGE` → major) y el Release de GitHub.
-- Al fusionar el PR de release, `release.yaml` dispara `build.yaml` (por `workflow_dispatch`, exento de la regla anti-recursión de GitHub) sobre el tag creado, que construye la imagen con etiqueta semver (`X.Y.Z`, `X.Y`). Tags `v*` pusheados manualmente también disparan el build. En push a `master` solo se sube `latest` (dev).
-- Bootstrap: `.release-please-manifest.json` arranca en `0.0.0`; la estrategia `simple` fija la primera release en `1.0.0`.
+- The single source of truth for the version is `__version__` in `app/__init__.py` (on a line annotated with `# x-release-please-version`, which release-please uses to update it); the torznab caps expose it as `appversion`/`version`.
+- `release-please` (`.github/workflows/release.yaml`) maintains a release PR (`release-please/branches/master → master`) that accumulates the conventional commits since the last release.
+- To publish: merge that PR. Merging bumps `__version__`, regenerates `CHANGELOG.md`, creates the `vX.Y.Z` tag (bump: `feat:` → minor, `fix:` → patch, `BREAKING CHANGE` → major) and the GitHub Release.
+- When the release PR is merged, `release.yaml` triggers `build.yaml` (via `workflow_dispatch`, exempt from GitHub's anti-recursion rule) on the created tag, which builds the image tagged with semver (`X.Y.Z`, `X.Y`). Manually pushed `v*` tags also trigger the build. On push to `master` only `latest` (dev) is pushed.
+- Bootstrap: `.release-please-manifest.json` starts at `0.0.0`; the `simple` strategy sets the first release to `1.0.0`.
 
 ## Version parity
 
 - Python pinned to 3.12.9 in `.python-version`, `Dockerfile`, and CI — keep all three in sync.
 - `lxml` pinned 6.1.3 (6.x required for Python 3.14 wheels; 5.3.0 has none).
+
+## Docs
+
+- If a change affects routes, env vars, scraping flow, or integration, update the corresponding docs (`README.md`, this `AGENTS.md`) in the same change.
+- If the change is docs-only, use a separate `docs:` commit.
 
 ## Commits
 
