@@ -88,11 +88,13 @@ def capabilities() -> str:
     )
 
 
-def _item_title(f: Ed2kFile, categories: list[int]) -> str:
-    """Añade el año de la ficha antes de la etiqueta del grupo si el nombre
-    del fichero no lo lleva: ``Nombre (2020) [BDrip 1080p: ...]``.
+def _release_name(f: Ed2kFile, categories: list[int]) -> str:
+    """Añade el año de la ficha al nombre del fichero si no lo lleva.
 
-    Radarr descarta con "Unable to parse release" todo título sin año.
+    ``Nombre (2020) [BDrip 1080p: ...]``: Radarr descarta con "Unable to parse
+    release" todo release sin año. El nombre viaja también en el ``dn`` del
+    magnet, que aMulerr usa como nombre del fichero en aMule; así el import
+    automático empareja el fichero descargado ("Movie title mismatch" si no).
     """
     stem, ext = splitext(f.name)
     if (
@@ -101,15 +103,16 @@ def _item_title(f: Ed2kFile, categories: list[int]) -> str:
         and 2000 in categories
         and not re.search(rf"\b{f.year}\b", f.name)
     ):
-        return f"{stem} ({f.year})"
+        return f"{stem} ({f.year}){ext}"
     return f.name
 
 
 def _item_xml(f: Ed2kFile, categories: list[int], pubdate: str) -> str:
     guid = f.hash
     label = f" [{f.group_label}]" if f.group_label else ""
-    title = escape(f"{_item_title(f, categories)}{label}")
-    magnet = quoteattr(to_magnet(f.hash, f.name, f.size))
+    release = _release_name(f, categories)
+    title = escape(f"{release}{label}")
+    magnet = quoteattr(to_magnet(f.hash, release, f.size))
     seeders = max(f.downloads, 0)
     cat_tags = "".join(f"  <category>{c}</category>\n" for c in categories)
     cat_attrs = "".join(

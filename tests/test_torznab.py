@@ -74,7 +74,14 @@ def _movie_file(name: str, year: int | None = None) -> Ed2kFile:
 def test_feed_anade_anio_para_radarr():
     """Sin año Radarr rechaza el release con "Unable to parse release"."""
     xml = feed([(_movie_file("El Robo Del Siglo.mkv", 2020), [2000, 2040])])
-    assert "<title>El Robo Del Siglo (2020) [HD 1080p: mkv (HEVC 10b-AC3)]</title>" in xml
+    assert "<title>El Robo Del Siglo (2020).mkv [HD 1080p: mkv (HEVC 10b-AC3)]</title>" in xml
+
+
+def test_magnet_usa_el_nombre_con_anio():
+    """aMulerr usa el ``dn`` del magnet como nombre del fichero; sin año
+    Radarr bloquea el import ("Movie title mismatch")."""
+    xml = feed([(_movie_file("El Robo Del Siglo.mkv", 2020), [2000, 2040])])
+    assert "dn=El%20Robo%20Del%20Siglo%20%282020%29.mkv" in xml
 
 
 def test_feed_no_duplica_anio():
